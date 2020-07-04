@@ -4,8 +4,8 @@
 // @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip & Dariush.
 // @description    Several changes to make Danbooru much better.
 // @version        8.2.3d
-// @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
-// @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
+// @updateURL      https://github.com/ForsakenRei/better-better-booru/blob/master/better-better-booru.user.js
+// @downloadURL    https://github.com/ForsakenRei/better-better-booru/blob/master/better-better-booru.user.js
 // @match          *://*.donmai.us/*
 // @run-at         document-end
 // @grant          GM_setValue
