@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name           better_better_booru
 // @namespace      https://greasyfork.org/scripts/3575-better-better-booru
-// @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip.
+// @author         otani, modified by Jawertae, A Pseudonymous Coder & Moebius Strip & Dariush.
 // @description    Several changes to make Danbooru much better.
-// @version        8.2.3
+// @version        8.2.3d
 // @updateURL      https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.meta.js
 // @downloadURL    https://greasyfork.org/scripts/3575-better-better-booru/code/better_better_booru.user.js
 // @match          *://*.donmai.us/*
@@ -189,7 +189,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	Element.prototype.bbbInfo = function(name, value) {
 		// Retrieve or set info in data attributes.
 		if (this.tagName === "HTML") { // Pseudo document.bbbInfo for retrieved pages.
-			var imgContainer = getId("image-container", this);
+			var imgContainer = document.getElementsByClassName("image-container")[0];
 
 			if (typeof(value) !== "undefined" && imgContainer)
 				imgContainer.setAttribute("data-" + name, value);
@@ -217,7 +217,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 	document.bbbInfo = function(name, value) {
 		// Document specific bbbInfo that goes along with the element prototype method.
-		var imgContainer = document.getElementById("image-container");
+		var imgContainer = document.getElementsByClassName("image-container")[0];
 
 		if (typeof(value) !== "undefined" && imgContainer)
 			imgContainer.setAttribute("data-" + name, value);
@@ -747,6 +747,19 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 					if (xmlhttp.status === 200) { // 200 = "OK"
 						var xml = parseJson(xmlhttp.responseText, {});
 
+						for (var i = 0, len = xml.length; i < len; i++) {
+							if (typeof xml[i]['md5'] === 'undefined'){
+								var md5_ext = window.localStorage.getItem(xml[i]['id']);
+								if (md5_ext == null)
+									continue;
+								md5_ext = md5_ext.split('.');
+								let md5 = md5_ext[0];
+								xml[i]['md5'] = md5;
+								xml[i]['preview_file_url'] = "https://raikou4.donmai.us/preview/" + md5[0] + md5[1] + "/" + md5[2] + md5[3] + "/" + md5 + ".jpg";
+								//xml[i]['preview_file_url'] = "/data/preview/" + md5_ext[0] + ".jpg";
+							}
+						}
+
 						// Update status message.
 						if (mode === "search" || mode === "popular" || mode === "popular_view" || mode === "favorites" || mode === "pool_search" || mode === "favorite_group_search") {
 							bbb.flags.thumbs_xml = false;
@@ -843,7 +856,16 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	function parsePost() {
 		// Take a post's info and alter its page.
 		var postInfo = bbb.post.info = document.bbbInfo();
-		var imgContainer = document.getElementById("image-container");
+		if (postInfo['md5'] == ""){
+			var md5_ext = window.localStorage.getItem(postInfo['id']);
+			postInfo['file_img_src'] = postInfo['file_url'] = (postInfo['id'] < 1000000 ? "/cached" : "") + "/data//" + md5_ext;
+			if (postInfo.file_ext === "zip"){
+				load_sample_first = true;
+				md5_ext = md5_ext.split('.');
+				postInfo['large_file_img_src'] = postInfo['file_url'] = "/data/sample/sample-" + md5_ext[0] + ".webm";
+			}
+		}
+		var imgContainer = document.getElementsByClassName("image-container")[0];
 
 		if (!imgContainer || !postInfo) {
 			bbbNotice("Post content could not be located.", -1);
@@ -1210,11 +1232,11 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		if (target)
 			target.parentNode.replaceChild(newNotice, target);
 		else if (mode === "child") {
-			target = document.getElementsByClassName("notice-parent")[0] || bbb.el.resizeNotice || document.getElementById("image-container");
+			target = document.getElementsByClassName("notice-parent")[0] || bbb.el.resizeNotice || document.getElementsByClassName("image-container")[0];
 			target.parentNode.insertBefore(newNotice, target);
 		}
 		else if (mode === "parent") {
-			target = bbb.el.resizeNotice || document.getElementById("image-container");
+			target = bbb.el.resizeNotice || document.getElementsByClassName("image-container")[0];
 			target.parentNode.insertBefore(newNotice, target);
 		}
 	}
@@ -1606,7 +1628,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 	function getPostContent(docEl) {
 		// Retrieve the post content related elements.
 		var target = docEl || document;
-		var imgContainer = getId("image-container", target);
+		var imgContainer = document.getElementsByClassName("image-container")[0];
 
 		if (!imgContainer)
 			return {};
@@ -3517,7 +3539,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 		// Remove the original notice (it's not always there) and replace it with our own.
 		var img = document.getElementById("image");
-		var imgContainer = document.getElementById("image-container");
+		var imgContainer = document.getElementsByClassName("image-container")[0];
 		var resizeNotice = document.getElementById("image-resize-notice");
 
 		if (resizeNotice)
@@ -5855,7 +5877,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 				if (!matchList.count && matchList.override !== false) {
 					if (id === "image-container")
-						blacklistShowPost(document.getElementById("image-container"));
+						blacklistShowPost(document.getElementsByClassName("image-container")[0]);
 					else {
 						els = document.getElementsByClassName(id);
 
@@ -5882,7 +5904,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 
 				if (matchList.override !== true) {
 					if (id === "image-container")
-						blacklistHidePost(document.getElementById("image-container"));
+						blacklistHidePost(document.getElementsByClassName("image-container")[0]);
 					else {
 						els = document.getElementsByClassName(id);
 
@@ -5902,7 +5924,7 @@ function bbbScript() { // Wrapper for injecting the script into the document.
 		// Retrieve the necessary elements from the target element or current document.
 		var blacklistBox = getId("blacklist-box", target) || document.getElementById("blacklist-box");
 		var blacklistList = getId("blacklist-list", target) || document.getElementById("blacklist-list");
-		var imgContainer = getId("image-container", target);
+		var imgContainer = document.getElementsByClassName("image-container")[0];
 		var posts = getPosts(target);
 
 		var i, il; // Loop variables.
